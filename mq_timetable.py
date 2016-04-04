@@ -75,8 +75,11 @@ def main():
     import json
     import sys
 
+    username = sys.argv[1] if len(sys.argv) > 1 else input('Student ID: ')
+    password = sys.argv[2] if len(sys.argv) > 2 else getpass.getpass()
+
     try:
-        timetable = get_timetable(input('Username: '), getpass.getpass())
+        timetable = get_timetable(username, password)
     except WrongPasswordError:
         print('Wrong username or password.')
     else:
