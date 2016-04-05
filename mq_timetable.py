@@ -24,8 +24,8 @@ def to_timetable_dict(page):
 
         for cls in col.find_all(class_='cssClassInnerPanel'):
             classes.append({
-                'start': cls.find(class_='cssHiddenStartTm')['value'],
-                'end': cls.find(class_='cssHiddenEndTm')['value'],
+                'start': to_24h(cls.find(class_='cssHiddenStartTm')['value']),
+                'end': to_24h(cls.find(class_='cssHiddenEndTm')['value']),
                 'what': cls.find(class_='cssTtableClsSlotWhat').string,
                 'where': cls.find(class_='cssTtableClsSlotWhere').string,
                 'subject': cls.find(class_='cssTtableHeaderPanel').string.strip(),
@@ -34,6 +34,15 @@ def to_timetable_dict(page):
         timetable[day] = classes
 
     return timetable
+
+
+def to_24h(time):
+    am_pm = time[-2:].lower()
+    hour, minute = time[:-2].split(':')
+    hour = int(hour)
+    if am_pm == 'pm' and hour != 12:
+        hour += 12
+    return '{}:{}'.format(hour, minute)
 
 
 def make_login_happy(page):
