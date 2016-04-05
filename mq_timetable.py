@@ -27,7 +27,7 @@ def to_timetable_dict(page):
                 'end': cls.find(class_='cssHiddenEndTm')['value'],
                 'what': cls.find(class_='cssTtableClsSlotWhat').string,
                 'where': cls.find(class_='cssTtableClsSlotWhere').string,
-                'subject': cls.find(class_='cssTtableHeaderPanel').string,
+                'subject': cls.find(class_='cssTtableHeaderPanel').string.strip(),
             })
 
         timetable[day] = classes
