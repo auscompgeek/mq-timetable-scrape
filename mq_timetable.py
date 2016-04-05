@@ -42,7 +42,7 @@ def to_24h(time):
     hour = int(hour)
     if am_pm == 'pm' and hour != 12:
         hour += 12
-    return '{}:{}'.format(hour, minute)
+    return '{:>02}:{}'.format(hour, minute)
 
 
 def make_login_happy(page):
