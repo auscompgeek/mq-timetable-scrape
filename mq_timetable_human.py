@@ -19,7 +19,7 @@ def main():
             print(day)
             # eStudent seems to render later classes in the day first
             for cls in reversed(timetable[day]):
-                print('* {what}\n  {start}-{end}\n  {where}'.format_map(cls))
+                print('* {subject} {what}\n  {start}-{end}\n  {where}'.format_map(cls))
 
 
 if __name__ == "__main__":
