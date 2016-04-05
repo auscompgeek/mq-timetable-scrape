@@ -8,7 +8,7 @@ LOGIN_URL = 'https://student1.mq.edu.au/T1SMProd/WebApps/eStudent/login.aspx'
 TIMETABLE_URL = 'https://student1.mq.edu.au/T1SMProd/WebApps/eStudent/SM/StudentTtable10.aspx?f=MQ.EST.TIMETBL.WEB'
 
 
-class WrongPasswordError(Exception):
+class LoginFailedError(Exception):
     def __init__(self, response):
         self.response = response
 
@@ -64,7 +64,7 @@ def get_timetable(studentid, password):
     r = sess.post(LOGIN_URL, data=data, allow_redirects=False)
     # we'll get redirected iff login was successful
     if r.status_code != requests.codes.found:
-        raise WrongPasswordError(r)
+        raise LoginFailedError(r)
 
     r = sess.get(TIMETABLE_URL)
     return to_timetable_dict(r.text)
@@ -80,8 +80,8 @@ def main():
 
     try:
         timetable = get_timetable(username, password)
-    except WrongPasswordError:
-        print('Wrong username or password.')
+    except LoginFailedError:
+        print('{"error":"Login failed. Wrong username or password?"}')
     else:
         json.dump(timetable, sys.stdout)
         print()
