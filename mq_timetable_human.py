@@ -15,11 +15,10 @@ def main():
         print('Login failed. Wrong username or password?')
     else:
         for day in DAYS:
-            print()
-            print(day)
+            print('\n' + day)
             # eStudent seems to render later classes in the day first
             for cls in reversed(timetable[day]):
-                print('* {subject} {what}\n  {start}-{end}\n  {where}'.format_map(cls))
+                print('* {subject} {what}\n  {start}-{end}\n  {where}'.format(**cls))
 
 
 if __name__ == "__main__":
