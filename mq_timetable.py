@@ -14,6 +14,40 @@ class LoginFailedError(Exception):
         self.response = response
 
 
+class MQeStudentSession(object):
+    def __init__(self):
+        self.sess = requests.Session()
+        self._timetable_page = None
+
+    def login(self, studentid, password):
+        # this is disgusting.
+        r = self.sess.get(LOGIN_URL)
+
+        data = make_login_happy(r.text)
+        data.update({
+            '__EVENTTARGET': 'ctl00$Content$cmdLogin',
+            '__EVENTARGUMENT': '',
+            'ctl00$Content$txtUserName$txtText': studentid,
+            'ctl00$Content$txtPassword$txtText': password,
+        })
+
+        r = self.sess.post(LOGIN_URL, data=data, allow_redirects=False)
+
+        # we'll get redirected iff login was successful
+        if r.status_code != requests.codes.found:
+            raise LoginFailedError(r)
+
+    def get_timetable_page(self):
+        if not self._timetable_page:
+            r = self.sess.get(TIMETABLE_URL)
+            r.raise_for_status()
+            self._timetable_page = r.text
+        return self._timetable_page
+
+    def get_timetable(self):
+        return to_timetable_dict(self.get_timetable_page())
+
+
 def to_timetable_dict(page):
     soup = BeautifulSoup(page)
     timetable = {}
@@ -56,25 +90,9 @@ def make_login_happy(page):
 
 
 def get_timetable(studentid, password):
-    sess = requests.Session()
-
-    # this dance isn't fun
-    r = sess.get(LOGIN_URL)
-    data = make_login_happy(r.text)
-    data.update({
-        '__EVENTTARGET': 'ctl00$Content$cmdLogin',
-        '__EVENTARGUMENT': '',
-        'ctl00$Content$txtUserName$txtText': studentid,
-        'ctl00$Content$txtPassword$txtText': password,
-    })
-
-    r = sess.post(LOGIN_URL, data=data, allow_redirects=False)
-    # we'll get redirected iff login was successful
-    if r.status_code != requests.codes.found:
-        raise LoginFailedError(r)
-
-    r = sess.get(TIMETABLE_URL)
-    return to_timetable_dict(r.text)
+    session = MQeStudentSession()
+    session.login(studentid, password)
+    return session.get_timetable()
 
 
 def main():
