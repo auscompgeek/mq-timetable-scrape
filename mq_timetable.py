@@ -63,13 +63,18 @@ def get_start_end_dates(page):
         for cls in classes:
             class_type = cls.find(class_='cssTtableSspNavActvNm').string.strip()
 
-            what = cls.find(class_='cssTtableNavMainWhat').string
+            what = cls.find(class_='cssTtableNavMainWhat')
+            if not what:
+                # the user isn't enrolled in this class
+                continue
+
+            what = what.string
             assert what.startswith('Class ')
             class_num = int(what[len('Class '):])
 
             when = cls.find(class_='cssTtableNavMainWhen')
-            start_date = when.children[1]
-            end_date = when.children[3]
+            start_date = when.contents[1]
+            end_date = when.contents[3]
 
             dates[unit_name, '%s (%d)' % (class_type, class_num)] = start_date, end_date
 
