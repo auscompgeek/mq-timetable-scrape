@@ -49,7 +49,7 @@ def make_estudent_date_arrow(date):
 
 def main():
     session = MQeStudentSession()
-    sys.stderr.write('Username: ')
+    sys.stderr.write('Student ID: ')
     session.login(input(), getpass.getpass())
     timetable = session.get_timetable()
     start_end_dates = session.get_start_end_dates()
