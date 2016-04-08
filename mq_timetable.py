@@ -23,7 +23,7 @@ class MQeStudentSession(object):
         # this is disgusting.
         r = self.sess.get(LOGIN_URL)
 
-        data = make_login_happy(r.text)
+        data = make_estudent_happy(r.text)
         data.update({
             '__EVENTTARGET': 'ctl00$Content$cmdLogin',
             '__EVENTARGUMENT': '',
@@ -37,6 +37,9 @@ class MQeStudentSession(object):
         if r.status_code != requests.codes.found:
             raise LoginFailedError(r)
 
+    def get_start_end_dates(self):
+        return get_start_end_dates(self.get_timetable_page())
+
     def get_timetable_page(self):
         if not self._timetable_page:
             r = self.sess.get(TIMETABLE_URL)
@@ -46,6 +49,31 @@ class MQeStudentSession(object):
 
     def get_timetable(self):
         return to_timetable_dict(self.get_timetable_page())
+
+
+def get_start_end_dates(page):
+    dates = {}
+    soup = BeautifulSoup(page)
+    units = soup.find_all(class_='cssTtableSspNavContainer')
+
+    for unit in units:
+        unit_name = unit.find(class_='cssTtableSspNavMasterSpkInfo2').find('span').string
+        classes = unit.find_all(class_='cssTtableNavActvTop')
+
+        for cls in classes:
+            class_type = cls.find(class_='cssTtableSspNavActvNm').string.strip()
+
+            what = cls.find(class_='cssTtableNavMainWhat').string
+            assert what.startswith('Class ')
+            class_num = int(what[len('Class '):])
+
+            when = cls.find(class_='cssTtableNavMainWhen')
+            start_date = when.children[1]
+            end_date = when.children[3]
+
+            dates[unit_name, '%s (%d)' % (class_type, class_num)] = start_date, end_date
+
+    return dates
 
 
 def to_timetable_dict(page):
@@ -79,7 +107,8 @@ def to_24h(time):
     return '{:>02}:{}'.format(hour, minute)
 
 
-def make_login_happy(page):
+def make_estudent_happy(page):
+    """Extract required form values for POST requests."""
     values = {}
     soup = BeautifulSoup(page)
 
