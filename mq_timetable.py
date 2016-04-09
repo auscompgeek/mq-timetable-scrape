@@ -1,12 +1,14 @@
 #!/usr/bin/env python
 from __future__ import print_function
 
+import arrow
 import requests
 from bs4 import BeautifulSoup
 
 DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri']
 LOGIN_URL = 'https://student1.mq.edu.au/T1SMProd/WebApps/eStudent/login.aspx'
 TIMETABLE_URL = 'https://student1.mq.edu.au/T1SMProd/WebApps/eStudent/SM/StudentTtable10.aspx?f=MQ.EST.TIMETBL.WEB'
+TZ = 'Australia/Sydney'
 
 
 class LoginFailedError(Exception):
@@ -36,6 +38,9 @@ class MQeStudentSession(object):
         # we'll get redirected iff login was successful
         if r.status_code != requests.codes.found:
             raise LoginFailedError(r)
+
+    def get_start_end_arrows(self):
+        return get_start_end_arrows(self.get_start_end_dates())
 
     def get_start_end_dates(self):
         return get_start_end_dates(self.get_timetable_page())
@@ -81,6 +86,17 @@ def get_start_end_dates(page):
     return dates
 
 
+def get_start_end_arrows(dates):
+    arws = {}
+
+    for key, (start, end) in dates.items():
+        start_arw = estudent_date_to_arrow(start)
+        end_arw = estudent_date_to_arrow(end)
+        arws[key] = start_arw, end_arw
+
+    return arws
+
+
 def to_timetable_dict(page):
     soup = BeautifulSoup(page)
     timetable = {}
@@ -101,6 +117,16 @@ def to_timetable_dict(page):
         timetable[day] = classes
 
     return timetable
+
+
+def estudent_date_to_arrow(date, year=None):
+    day, month = date.split('-')
+    month = arrow.locales.EnglishLocale().month_number(month)
+    day = int(day)
+    if year:
+        return arrow.Arrow(year, month, day, tzinfo=TZ)
+    else:
+        return arrow.get(TZ).floor('day').replace(month=month, day=day)
 
 
 def to_24h(time):

@@ -5,9 +5,8 @@
 import arrow
 import getpass
 import sys
-from mq_timetable import MQeStudentSession, DAYS
+from mq_timetable import MQeStudentSession, DAYS, TZ
 
-TZ = 'Australia/Sydney'
 ICAL_TIME_FORMAT = 'YYYYMMDDTHHmmss'
 
 CAL_HEADER = '''\
@@ -39,31 +38,16 @@ def tupleise_24h(t):
     return hour, minute
 
 
-def make_estudent_date_arrow(date):
-    day, month = date.split('-')
-    month = arrow.locales.EnglishLocale().month_number(month)
-    day = int(day)
-    arw = arrow.now(TZ)
-    return arw.replace(month=month, day=day).floor('day')
-
-
 def main():
     session = MQeStudentSession()
     sys.stderr.write('Student ID: ')
     session.login(input(), getpass.getpass())
     timetable = session.get_timetable()
-    start_end_dates = session.get_start_end_dates()
-    process(timetable, start_end_dates)
+    start_end_arws = session.get_start_end_arrows()
+    process(timetable, start_end_arws)
 
 
-def process(timetable, start_end_dates):
-    start_end_arws = {}
-
-    for key, (start, end) in start_end_dates.items():
-        start_arw = make_estudent_date_arrow(start)
-        end_arw = make_estudent_date_arrow(end)
-        start_end_arws[key] = start_arw, end_arw
-
+def process(timetable, start_end_arws):
     sys.stdout.write(CAL_HEADER)
 
     for isoweekdaym1, day in enumerate(DAYS):
