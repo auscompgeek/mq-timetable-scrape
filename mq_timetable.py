@@ -55,6 +55,9 @@ class MQeStudentSession(object):
     def get_timetable(self):
         return to_timetable_dict(self.get_timetable_page())
 
+    def get_unit_names(self):
+        return get_unit_names(self.get_timetable_page())
+
 
 def get_start_end_dates(page):
     dates = {}
@@ -62,7 +65,7 @@ def get_start_end_dates(page):
     units = soup.find_all(class_='cssTtableSspNavContainer')
 
     for unit in units:
-        unit_name = unit.find(class_='cssTtableSspNavMasterSpkInfo2').find('span').string
+        unit_code = unit.find(class_='cssTtableSspNavMasterSpkInfo2').find('span').string
         classes = unit.find_all(class_='cssTtableNavActvTop')
 
         for cls in classes:
@@ -81,7 +84,7 @@ def get_start_end_dates(page):
             start_date = when.contents[1]
             end_date = when.contents[3]
 
-            dates[unit_name, '%s (%d)' % (class_type, class_num)] = start_date, end_date
+            dates[unit_code, '%s (%d)' % (class_type, class_num)] = start_date, end_date
 
     return dates
 
@@ -95,6 +98,19 @@ def get_start_end_arrows(dates):
         arws[key] = start_arw, end_arw
 
     return arws
+
+
+def get_unit_names(page):
+    names = {}
+    soup = BeautifulSoup(page)
+    units = soup.find_all(class_='cssTtableSspNavContainer')
+
+    for unit in units:
+        unit_code = unit.find(class_='cssTtableSspNavMasterSpkInfo2').find('span').string
+        unit_name = unit.find(class_='cssTtableSspNavMasterSpkInfo3').find('div').string.strip()
+        names[unit_code] = unit_name
+
+    return names
 
 
 def to_timetable_dict(page):
