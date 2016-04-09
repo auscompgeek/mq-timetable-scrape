@@ -47,7 +47,7 @@ class MQeStudentSession(object):
 
     def get_timetable_page(self):
         if not self._timetable_page:
-            r = self.sess.get(TIMETABLE_URL)
+            r = self.sess.get(TIMETABLE_URL, allow_redirects=False)
             r.raise_for_status()
             self._timetable_page = r.text
         return self._timetable_page
