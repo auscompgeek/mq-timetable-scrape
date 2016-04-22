@@ -52,8 +52,23 @@ class MQeStudentSession(object):
             self._timetable_page = r.text
         return self._timetable_page
 
+    def get_timetable_week_page(self, study_period, arw):
+        tt_page = self.get_timetable_page()
+        data = make_estudent_happy(tt_page)
+        data.update({
+            'ctl00$Content$ctlFilter$CboStudyPeriodFilter$elbList': study_period,
+            'ctl00$Content$ctlFilter$TxtStartDt': arw.format('DD-MMM-YYYY'),
+            'ctl00$Content$ctlFilter$BtnSearch': 'Refresh',
+        })
+        r = self.sess.post(TIMETABLE_URL, data=data, allow_redirects=False)
+        r.raise_for_status()
+        return r.text
+
     def get_timetable(self):
         return to_timetable_dict(self.get_timetable_page())
+
+    def get_timetable_week(self, study_period, arw):
+        return to_timetable_dict(self.get_timetable_week_page(study_period, arw))
 
     def get_unit_names(self):
         return get_unit_names(self.get_timetable_page())
@@ -89,15 +104,22 @@ def get_start_end_dates(page):
     return dates
 
 
-def get_start_end_arrows(dates):
+def get_start_end_arrows(dates, year=None):
     arws = {}
 
     for key, (start, end) in dates.items():
-        start_arw = estudent_date_to_arrow(start)
-        end_arw = estudent_date_to_arrow(end)
+        start_arw = estudent_date_to_arrow(start, year=year)
+        end_arw = estudent_date_to_arrow(end, year=year)
         arws[key] = start_arw, end_arw
 
     return arws
+
+
+def get_selected_session(page):
+    soup = BeautifulSoup(page)
+    study_period_select = soup.find(id='ctl00_Content_ctlFilter_CboStudyPeriodFilter_elbList')
+    selected_option = study_period_select.find(selected='selected')
+    return selected_option['value'], selected_option.string
 
 
 def get_unit_names(page):
@@ -142,7 +164,15 @@ def estudent_date_to_arrow(date, year=None):
     if year:
         return arrow.Arrow(year, month, day, tzinfo=TZ)
     else:
-        return arrow.get(TZ).floor('day').replace(month=month, day=day)
+        return arrow.get(tzinfo=TZ).floor('day').replace(month=month, day=day)
+
+
+def conv_12h_to_24h_tuple(time):
+    am_pm = time[-2:].lower()
+    hour, minute = map(int, time[:-2].split(':'))
+    if am_pm == 'pm' and hour != 12:
+        hour += 12
+    return hour, minute
 
 
 def to_24h(time):
