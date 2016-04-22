@@ -40,7 +40,9 @@ class MQeStudentSession(object):
             raise LoginFailedError(r)
 
     def get_start_end_arrows(self):
-        return get_start_end_arrows(self.get_start_end_dates())
+        page = self.get_timetable_page()
+        year = int(get_selected_session(page)[0].split('-')[0])
+        return get_start_end_arrows(page, year=year)
 
     def get_start_end_dates(self):
         return get_start_end_dates(self.get_timetable_page())
@@ -52,14 +54,16 @@ class MQeStudentSession(object):
             self._timetable_page = r.text
         return self._timetable_page
 
-    def get_timetable_week_page(self, study_period, arw):
+    def get_timetable_filter_page(self, study_period, arw=None):
         tt_page = self.get_timetable_page()
         data = make_estudent_happy(tt_page)
         data.update({
             'ctl00$Content$ctlFilter$CboStudyPeriodFilter$elbList': study_period,
-            'ctl00$Content$ctlFilter$TxtStartDt': arw.format('DD-MMM-YYYY'),
             'ctl00$Content$ctlFilter$BtnSearch': 'Refresh',
         })
+        if arw:
+            data['ctl00$Content$ctlFilter$TxtStartDt'] = arw.format('DD-MMM-YYYY')
+
         r = self.sess.post(TIMETABLE_URL, data=data, allow_redirects=False)
         r.raise_for_status()
         return r.text
@@ -68,7 +72,7 @@ class MQeStudentSession(object):
         return to_timetable_dict(self.get_timetable_page())
 
     def get_timetable_week(self, study_period, arw):
-        return to_timetable_dict(self.get_timetable_week_page(study_period, arw))
+        return to_timetable_dict(self.get_timetable_filter_page(study_period, arw))
 
     def get_unit_names(self):
         return get_unit_names(self.get_timetable_page())
@@ -115,11 +119,21 @@ def get_start_end_arrows(dates, year=None):
     return arws
 
 
+def start_end_arrows(page, year=None):
+    return get_start_end_arrows(get_start_end_dates(page), year=year)
+
+
 def get_selected_session(page):
     soup = BeautifulSoup(page)
     study_period_select = soup.find(id='ctl00_Content_ctlFilter_CboStudyPeriodFilter_elbList')
     selected_option = study_period_select.find(selected='selected')
     return selected_option['value'], selected_option.string
+
+
+def get_study_periods(page):
+    soup = BeautifulSoup(page)
+    study_period_select = soup.find(id='ctl00_Content_ctlFilter_CboStudyPeriodFilter_elbList')
+    return [{'code': o['value'], 'name': o.string, 'selected': 'selected' in o.attrs} for o in study_period_select.find_all('option')]
 
 
 def get_unit_names(page):
