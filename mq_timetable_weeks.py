@@ -20,6 +20,7 @@ def main():
     sys.stderr.write('Student ID: ')
     session.login(input(), getpass.getpass())
     study_period_code, study_period_name = get_selected_session(session.get_timetable_page())
+    unit_names = session.get_unit_names()
     start_end_arws = session.get_start_end_arrows()
 
     first_class = min(a for a, _ in start_end_arws.values())
@@ -30,11 +31,11 @@ def main():
     if week_start < now:
         week_start = now.floor('week')
 
-    all_classes = process(session, study_period_code, week_start, last_class)
+    all_classes = process(session, study_period_code, week_start, last_class, unit_names)
     json.dump({'session_name': study_period_name, 'classes': all_classes}, sys.stdout)
 
 
-def process(session, study_period_code, week_start, last_class):
+def process(session, study_period_code, week_start, last_class, unit_names):
     all_classes = []
 
     while week_start < last_class:
@@ -44,17 +45,20 @@ def process(session, study_period_code, week_start, last_class):
             classes = weektable[day]
 
             for cls in reversed(classes):
+                unit_code = cls['subject']
                 start_h, start_m = tupleise_24h(cls['start'])
                 end_h, end_m = tupleise_24h(cls['end'])
                 this_start = week_start.replace(days=+isoweekdaym1, hour=start_h, minute=start_m)
                 this_end = week_start.replace(days=+isoweekdaym1, hour=start_h, minute=start_m)
 
+                description = '{0} - {1}'.format(cls['what'], unit_names[unit_code])
+
                 all_classes.append({
-                    'subject': cls['subject'],
-                    'what': cls['what'],
-                    'where': cls['where'],
-                    'start': this_start.format(),
-                    'end': this_end.format(),
+                    'name': unit_code,
+                    'location': cls['where'],
+                    'description': description,
+                    'begin': this_start.timestamp(),
+                    'end': this_end.timestamp(),
                 })
 
         week_start = week_start.replace(weeks=+1)
