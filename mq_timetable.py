@@ -42,7 +42,7 @@ class MQeStudentSession(object):
     def get_start_end_arrows(self):
         page = self.get_timetable_page()
         year = int(get_selected_session(page)[0].split('-')[0])
-        return get_start_end_arrows(page, year=year)
+        return start_end_arrows(page, year=year)
 
     def get_start_end_dates(self):
         return get_start_end_dates(self.get_timetable_page())
