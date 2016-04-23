@@ -75,8 +75,8 @@ def process(session, study_period_code, week_start, last_class, unit_names):
                     'name': unit_code,
                     'location': cls['where'],
                     'description': description,
-                    'begin': this_start.timestamp(),
-                    'end': this_end.timestamp(),
+                    'begin': this_start.timestamp,
+                    'end': this_end.timestamp,
                 })
 
         week_start = week_start.replace(weeks=+1)
