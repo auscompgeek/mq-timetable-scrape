@@ -82,3 +82,7 @@ def process(session, study_period_code, week_start, last_class, unit_names):
         week_start = week_start.replace(weeks=+1)
 
     return all_classes
+
+
+if __name__ == "__main__":
+    main()
