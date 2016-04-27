@@ -178,7 +178,7 @@ def estudent_date_to_arrow(date, year=None):
     if year:
         return arrow.Arrow(year, month, day, tzinfo=TZ)
     else:
-        return arrow.get(tzinfo=TZ).floor('day').replace(month=month, day=day)
+        return arrow.now(TZ).floor('day').replace(month=month, day=day)
 
 
 def conv_12h_to_24h_tuple(time):

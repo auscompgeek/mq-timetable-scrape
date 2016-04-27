@@ -3,7 +3,7 @@ from __future__ import print_function
 
 import arrow
 import json
-from mq_timetable import MQeStudentSession, DAYS, get_study_periods, get_unit_names, start_end_arrows
+from mq_timetable import MQeStudentSession, DAYS, TZ, get_study_periods, get_unit_names, start_end_arrows
 
 #midsem_start = arrow.Arrow(2016, 4, 10, tzinfo=TZ)
 #midsem_end = midsem_start.replace(weeks=+2)
@@ -46,7 +46,7 @@ def main():
 
     first_class = min(a for a, _ in start_end_arws.values())
     last_class = max(b for _, b in start_end_arws.values())
-    week_start = max(first_class, arrow.get()).floor('week')
+    week_start = max(first_class, arrow.now(TZ)).floor('week')
 
     all_classes = process(session, study_period_code, week_start, last_class, unit_names)
     json.dump({'session_name': study_period_name, 'classes': all_classes}, sys.stdout)
