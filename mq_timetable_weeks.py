@@ -5,8 +5,7 @@ import arrow
 import json
 from mq_timetable import MQeStudentSession, LoginFailedError, DAYS, TZ, get_study_periods, get_unit_names, start_end_arrows
 
-#midsem_start = arrow.Arrow(2016, 4, 10, tzinfo=TZ)
-#midsem_end = midsem_start.replace(weeks=+2)
+known_no_classes_weeks = frozenset()
 
 
 def tupleise_24h(t):
@@ -39,7 +38,7 @@ def main():
     study_periods = {x['name']: x for x in study_periods}
 
     if study_period_name not in study_periods:
-        print('{"error":"You are not enrolled in any units in the selected session (%s)."}' % study_period_name)
+        json.dump({"error": "You are not enrolled in any units in the selected session (%s)." % study_period_name}, sys.stdout)
         return
 
     study_period_code = study_periods[study_period_name]['code']
@@ -62,9 +61,14 @@ def main():
 
 
 def process(session, study_period_code, week_start, last_class, unit_names):
+    assert week_start.weekday() == 0
     all_classes = []
 
-    while week_start < last_class:
+    while week_start <= last_class:
+        if week_start in known_no_classes_weeks:
+            week_start = week_start.replace(weeks=+1)
+            continue
+
         weektable = session.get_timetable_week(study_period_code, week_start)
 
         for isoweekdaym1, day in enumerate(DAYS):
