@@ -3,7 +3,7 @@ from __future__ import print_function
 
 import arrow
 import json
-from mq_timetable import MQeStudentSession, DAYS, TZ, get_study_periods, get_unit_names, start_end_arrows
+from mq_timetable import MQeStudentSession, LoginFailedError, DAYS, TZ, get_study_periods, get_unit_names, start_end_arrows
 
 #midsem_start = arrow.Arrow(2016, 4, 10, tzinfo=TZ)
 #midsem_end = midsem_start.replace(weeks=+2)
@@ -22,21 +22,30 @@ def main():
     password = sys.argv[2] if len(sys.argv) > 2 else getpass.getpass()
 
     session = MQeStudentSession()
-    session.login(username, password)
+    try:
+        session.login(username, password)
+    except LoginFailedError:
+        print('{"error":"Login failed. Wrong username or password?"}')
+        return
 
     study_periods = get_study_periods(session.get_timetable_page())
     if len(sys.argv) > 3:
-        study_period_code = sys.argv[3]
+        study_period_name = sys.argv[3]
     else:
         json.dump({'study_periods': study_periods}, sys.stdout)
         print()
-        study_period_code = input()
+        study_period_name = input()
 
-    study_periods = {x['code']: x for x in study_periods}
-    study_period_name = study_periods[study_period_code]['name']
+    study_periods = {x['name']: x for x in study_periods}
+
+    if study_period_name not in study_periods:
+        print('{"error":"You are not enrolled in any units in the selected session (%s)."}' % study_period_name)
+        return
+
+    study_period_code = study_periods[study_period_name]['code']
     study_period_year = int(study_period_code.split('-')[0])
 
-    if study_periods[study_period_code]['selected']:
+    if study_periods[study_period_name]['selected']:
         unit_names = session.get_unit_names()
         start_end_arws = session.get_start_end_arrows()
     else:
