@@ -26,7 +26,7 @@ def main():
 
     conf = config.importers['mq'][sem_tw_name]
     study_period_name = conf['sem_name']  # '2016 Session 1'
-    no_class_weeks = conf['no_class_weeks']
+    no_class_weeks = conf.get('no_class_weeks', frozenset())  # type: AbstractSet[arrow.Arrow]
 
     session = MQeStudentSession()
     try:
