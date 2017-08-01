@@ -80,7 +80,7 @@ class MQeStudentSession(object):
 
 def get_start_end_dates(page):
     dates = {}
-    soup = BeautifulSoup(page)
+    soup = BeautifulSoup(page, "html.parser")
     units = soup.find_all(class_='cssTtableSspNavContainer')
 
     for unit in units:
@@ -124,21 +124,21 @@ def start_end_arrows(page, year=None):
 
 
 def get_selected_session(page):
-    soup = BeautifulSoup(page)
+    soup = BeautifulSoup(page, "html.parser")
     study_period_select = soup.find(id='ctl00_Content_ctlFilter_CboStudyPeriodFilter_elbList')
     selected_option = study_period_select.find(selected='selected')
     return selected_option['value'], selected_option.string
 
 
 def get_study_periods(page):
-    soup = BeautifulSoup(page)
+    soup = BeautifulSoup(page, "html.parser")
     study_period_select = soup.find(id='ctl00_Content_ctlFilter_CboStudyPeriodFilter_elbList')
     return [{'code': o['value'], 'name': o.string, 'selected': 'selected' in o.attrs} for o in study_period_select.find_all('option')]
 
 
 def get_unit_names(page):
     names = {}
-    soup = BeautifulSoup(page)
+    soup = BeautifulSoup(page, "html.parser")
     units = soup.find_all(class_='cssTtableSspNavContainer')
 
     for unit in units:
@@ -150,7 +150,7 @@ def get_unit_names(page):
 
 
 def to_timetable_dict(page):
-    soup = BeautifulSoup(page)
+    soup = BeautifulSoup(page, "html.parser")
     timetable = {}
 
     for day in DAYS:
@@ -173,7 +173,7 @@ def to_timetable_dict(page):
 
 def estudent_date_to_arrow(date, year=None):
     day, month = date.split('-')
-    month = arrow.locales.EnglishLocale().month_number(month)
+    month = arrow.locales.EnglishLocale().month_number(month.lower())
     day = int(day)
     if year:
         return arrow.Arrow(year, month, day, tzinfo=TZ)
@@ -201,7 +201,7 @@ def to_24h(time):
 def make_estudent_happy(page):
     """Extract required form values for POST requests."""
     values = {}
-    soup = BeautifulSoup(page)
+    soup = BeautifulSoup(page, "html.parser")
 
     for name in '__VIEWSTATE', '__VIEWSTATEGENERATOR', '__EVENTVALIDATION':
         values[name] = soup.find(id=name)['value']
